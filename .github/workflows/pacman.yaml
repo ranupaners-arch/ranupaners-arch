@@ -1,0 +1,51 @@
+# Bangun animasi Pac-Man yang memakan grafik kontribusi (pacman_dark.svg /
+# pacman_light.svg) tiap hari, lalu commit balik ke main.
+name: Pacman contribution graph
+
+on:
+  schedule:
+    - cron: "30 22 * * *"   # 05:30 WIB
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pacman.yaml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-update
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate pacman SVG
+        uses: abozanona/pacman-contribution-graph@main
+        with:
+          github_user_name: ranupaners-arch
+          github_token: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Copy SVG
+        run: |
+          ls -la dist
+          cp dist/pacman-contribution-graph-dark.svg pacman_dark.svg
+          cp dist/pacman-contribution-graph.svg pacman_light.svg
+
+      - name: Commit
+        run: |
+          git config user.name "ranupaners-arch"
+          git config user.email "ranupaners@gmail.com"
+          git add pacman_dark.svg pacman_light.svg
+          git diff --cached --quiet && { echo "Tidak ada perubahan"; exit 0; }
+          git commit -m "chore(profil): perbarui animasi pacman"
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
