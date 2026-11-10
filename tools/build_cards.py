@@ -43,7 +43,7 @@ INFO = [
     ("Languages.Real", "Indonesia, Arab, English"),
     None,
     ("Hobbies.Software", "Web & App Development"),
-    ("Hobbies.Real", "Puisi (Aan Mansyur)"),
+    ("Hobbies.Real", "Puisi"),
 ]
 CONTACT = [
     ("Email", "halo@kukerjain.dev"),
