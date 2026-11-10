@@ -36,7 +36,7 @@ INFO = [
     ("Uptime", None),
     ("Host", "kukerjain.dev"),
     ("Kernel", "Mahasiswa Pendidikan Bahasa Arab, Institut Muslim Cendekia"),
-    ("IDE", "VS Code, Orca, Pencil.dev"),
+    ("IDE", "VS Code, Orca"),
     None,
     ("Languages.Programming", "Dart, TypeScript, JavaScript, Python"),
     ("Languages.Computer", "HTML, CSS, JSON, YAML, Markdown"),
