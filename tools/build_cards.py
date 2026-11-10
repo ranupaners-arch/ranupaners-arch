@@ -47,7 +47,7 @@ INFO = [
 ]
 CONTACT = [
     ("Email", "halo@kukerjain.dev"),
-    ("Website", "kukerjain.dev"),
+    ("Website", "ranupane.kukerjain.dev"),
     ("X", "@kukerjainweb"),
     ("GitHub", "ranupaners-arch"),
 ]
