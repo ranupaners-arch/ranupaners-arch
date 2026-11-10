@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/pacman.yaml"
+      - "tools/add_pacman_counter.py"
 
 permissions:
   contents: write
@@ -39,6 +40,13 @@ jobs:
           ls -la dist
           cp dist/pacman-contribution-graph-dark.svg pacman_dark.svg
           cp dist/pacman-contribution-graph.svg pacman_light.svg
+
+      # Hitungan "Commit: N" yang naik tiap kali pacman memakan kotak.
+      - name: Add commit counter
+        env:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          USER_NAME: ranupaners-arch
+        run: python3 tools/add_pacman_counter.py pacman_dark.svg:dark pacman_light.svg:light
 
       - name: Commit
         run: |
