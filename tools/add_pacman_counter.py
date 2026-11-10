@@ -7,7 +7,7 @@ mengganti warnanya ke warna kosong saat pacman memakannya. Skrip ini:
   2. Mengambil jumlah kontribusi per hari lewat GraphQL contributionCalendar
      (sumber data yang sama dengan generator) dan memetakannya ke kotak
      dengan rumus tanggal yang sama (53 minggu, berakhir di minggu ini).
-  3. Menyisipkan "Commit: N" di bawah grid. Saat kotak dimakan, angka
+  3. Menyisipkan "Kontribusi: N" di bawah grid. Saat kotak dimakan, angka
      bergulir naik satu-satu (gaya odometer, melambat di akhir), berkilau
      kuning sambil membesar sedikit, dan "+N" kecil melayang lalu memudar.
      Semua SMIL (tanpa JS), sinkron dengan dur & repeatCount pacman.
@@ -146,12 +146,12 @@ def counter_svg(events: list[tuple[float, int]], length_ms: float, rep: str,
     c = PALETTE[theme]
     L = length_ms / 1000
     dur = f"{length_ms:.0f}ms"
-    vx = len("Commit: ") * 8.4                           # 14px monospace ~0.6em
+    vx = len("Kontribusi: ") * 8.4                           # 14px monospace ~0.6em
     total = events[-1][1] if events else 0
     px = vx + len(f"{total:,}") * 8.4 + 10                # posisi "+N"
     head = f'dur="{dur}" repeatCount="{rep}"'
     parts = [f'<g id="{MARK}" font-family="{FONT}" font-size="14px">',
-             f'<text x="0" y="{y}" fill="{c["key"]}">Commit<tspan fill="{c["cc"]}">:</tspan></text>']
+             f'<text x="0" y="{y}" fill="{c["key"]}">Kontribusi<tspan fill="{c["cc"]}">:</tspan></text>']
 
     # Angka bergulir: satu <text> per nilai, tampil diskret pada jendela waktunya.
     starts = [t for t, _ in events]
