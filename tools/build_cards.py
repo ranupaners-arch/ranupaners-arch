@@ -28,6 +28,7 @@ THEMES = {
 
 WIDTH, HEIGHT = 1100, 550
 ASCII_X, INFO_X, TOP, LH = 15, 390, 30, 20
+ASCII_FS, ASCII_LH = 12, 14   # potret lebih rapat agar wajah dikenali
 
 USER = "ranupane@kukerjain"
 INFO = [
@@ -74,9 +75,23 @@ def kv(y: int, k: str, v: str) -> str:
     return tspan(y, f'{key(k)}:<tspan class="cc">{d}</tspan><tspan class="value">{escape(v)}</tspan>')
 
 
+def current_values(theme: str) -> dict:
+    """Ambil nilai statistik yang sudah ada di SVG agar rebuild tidak menghapusnya."""
+    path = ROOT / f"{theme}_mode.svg"
+    vals = dict(SAMPLE)
+    if path.exists():
+        from lxml import etree
+        root = etree.parse(str(path)).getroot()
+        for k in SAMPLE:
+            el = root.find(f".//*[@id='{k}']")
+            if el is not None and el.text:
+                vals[k] = el.text
+    return vals
+
+
 def build(theme: str) -> str:
     c = THEMES[theme]
-    v = layout(SAMPLE)
+    v = layout(current_values(theme))
     s = lambda i: f'<tspan class="value" id="{i}">{escape(v[i])}</tspan>'  # noqa: E731
     d = lambda i: f'<tspan class="cc" id="{i}_dots">{v[i + "_dots"]}</tspan>'  # noqa: E731
 
@@ -98,9 +113,9 @@ size-adjust: 109%;
 text, tspan {{white-space: pre;}}
 </style>
 <rect width="{WIDTH}px" height="{HEIGHT}px" fill="{c['bg']}" rx="15"/>
-<text x="{ASCII_X}" y="{TOP}" fill="{c['fg']}" class="ascii">"""]
+<text x="{ASCII_X}" y="{TOP}" fill="{c['fg']}" font-size="{ASCII_FS}px" class="ascii">"""]
     for i, row in enumerate(ASCII):
-        out.append(f'<tspan x="{ASCII_X}" y="{TOP + i * LH}">{escape(row)}</tspan>')
+        out.append(f'<tspan x="{ASCII_X}" y="{TOP + i * ASCII_LH}">{escape(row)}</tspan>')
     out.append(f'</text>\n<text x="{INFO_X}" y="{TOP}" fill="{c["fg"]}">')
 
     y = TOP
@@ -136,7 +151,7 @@ text, tspan {{white-space: pre;}}
                '<animate attributeName="opacity" values="1;0" dur="1.06s" calcMode="discrete" '
                'repeatCount="indefinite"/></tspan>')
     out.append("</text>\n</svg>\n")
-    assert y + 20 <= HEIGHT and TOP + (len(ASCII) - 1) * LH + 20 <= HEIGHT
+    assert y + 20 <= HEIGHT and TOP + (len(ASCII) - 1) * ASCII_LH + 14 <= HEIGHT
     return "\n".join(out)
 
 
