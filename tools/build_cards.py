@@ -30,24 +30,25 @@ WIDTH, HEIGHT = 1100, 550
 ASCII_X, INFO_X, TOP, LH = 15, 390, 30, 20
 ASCII_FS, ASCII_LH = 12, 14   # potret lebih rapat agar wajah dikenali
 
-USER = "ranupane@kukerjain"
+USER = "RANUPANE RIMBA ARGANA"
 INFO = [
     ("OS", "macOS, Linux, iOS, Android"),
     ("Uptime", None),
     ("Host", "kukerjain.dev"),
-    ("Kernel", "Pendidikan Bahasa Arab @ Institut Muslim Cendekia"),
-    ("Role.Startup", "Founder KukerjainAja (Jasa Pembuatan Web dan App)"),
+    ("Kernel", "Arabic Language Education @ Institut Muslim Cendekia"),
+    ("Role.Startup", "Founder KukerjainAja (Web & App Development Services)"),
     ("IDE", "VS Code, Orca, Cursor"),
     None,
     ("Languages.Programming", "Dart, TypeScript, JavaScript, Python"),
     ("Languages.Computer", "HTML, CSS, JSON, YAML, Markdown"),
-    ("Languages.Real", "Indonesia, Arab, English"),
+    ("Languages.Real", "Indonesian, Arabic, English"),
     None,
     ("Hobbies.Software", "Web & App Development"),
-    ("Hobbies.Real", "Poet, Writing, Reading"),
+    ("Hobbies.Real", "Poetry, Writing, Reading"),
 ]
 CONTACT = [
-    ("Email", "ranupaners@gmail.com"),
+    ("Personal Email", "ranupaners@gmail.com"),
+    ("Bussines Email", "ranupaners@kukerjain.dev"),
     ("Website", "ranupane.kukerjain.dev"),
     ("Instagram", "@_mberimbe"),
     ("X", "@rnpainvest"),
