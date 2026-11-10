@@ -32,7 +32,7 @@ ASCII_FS, ASCII_LH = 12, 14   # potret lebih rapat agar wajah dikenali
 
 USER = "ranupane@kukerjain"
 INFO = [
-    ("OS", "macOS, IOS, Android"),
+    ("OS", "macOS, iOS, Android"),
     ("Uptime", None),
     ("Host", "kukerjain.dev"),
     ("Kernel", "Pendidikan Bahasa Arab @ Institut Muslim Cendekia"),
