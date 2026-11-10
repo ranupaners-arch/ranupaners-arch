@@ -72,6 +72,9 @@ def tspan(y: int, body: str = "") -> str:
 
 
 def kv(y: int, k: str, v: str) -> str:
+    if not k:  # baris lanjutan: ("", "nilai") -> turun ke bawah tanpa label
+        d = dots(LINE_W - len(". ") - len(v))
+        return tspan(y, f'<tspan class="cc">{d}</tspan><tspan class="value">{escape(v)}</tspan>')
     d = dots(LINE_W - len(". ") - len(k) - 1 - len(v))
     return tspan(y, f'{key(k)}:<tspan class="cc">{d}</tspan><tspan class="value">{escape(v)}</tspan>')
 
@@ -152,14 +155,16 @@ text, tspan {{white-space: pre;}}
                '<animate attributeName="opacity" values="1;0" dur="1.06s" calcMode="discrete" '
                'repeatCount="indefinite"/></tspan>')
     out.append("</text>\n</svg>\n")
-    assert y + 20 <= HEIGHT and TOP + (len(ASCII) - 1) * ASCII_LH + 14 <= HEIGHT
+    h = max(HEIGHT, y + 20)  # kartu memanjang otomatis bila baris bertambah
+    out[0] = out[0].replace(f'height="{HEIGHT}px"', f'height="{h}px"')
+    assert y + 20 <= h and TOP + (len(ASCII) - 1) * ASCII_LH + 14 <= HEIGHT
     return "\n".join(out)
 
 
 def main() -> None:
     for theme in THEMES:
         (ROOT / f"{theme}_mode.svg").write_text(build(theme))
-    print(f"dark_mode.svg & light_mode.svg ({WIDTH}x{HEIGHT}) dibangun.")
+    print("dark_mode.svg & light_mode.svg dibangun.")
 
 
 if __name__ == "__main__":
