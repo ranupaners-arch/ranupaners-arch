@@ -7,8 +7,10 @@ mengganti warnanya ke warna kosong saat pacman memakannya. Skrip ini:
   2. Mengambil jumlah kontribusi per hari lewat GraphQL contributionCalendar
      (sumber data yang sama dengan generator) dan memetakannya ke kotak
      dengan rumus tanggal yang sama (53 minggu, berakhir di minggu ini).
-  3. Menyisipkan "Commit: N" di bawah grid. N naik tepat saat kotak dimakan,
-     sinkron dengan dur & repeatCount animasi pacman (SMIL, tanpa JS).
+  3. Menyisipkan "Commit: N" di bawah grid. Saat kotak dimakan, angka
+     bergulir naik satu-satu (gaya odometer, melambat di akhir), berkilau
+     kuning sambil membesar sedikit, dan "+N" kecil melayang lalu memudar.
+     Semua SMIL (tanpa JS), sinkron dengan dur & repeatCount pacman.
   4. Generator memakan kotak terakhir tepat di frame terakhir lalu langsung
      mengulang, jadi semua animasi diberi jeda HOLD_MS di akhir (keyTimes
      diskalakan, nilai terakhir ditahan) agar total akhir sempat terlihat.
@@ -21,6 +23,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -29,13 +32,16 @@ import urllib.request
 USER_NAME = os.environ.get("USER_NAME") or "ranupaners-arch"
 GRID_WIDTH = 53
 EXTRA_H = 26                      # ruang tambahan di bawah grid untuk penghitung
-PALETTE = {                        # sama dengan kartu neofetch
-    "dark": {"key": "#ffa657", "value": "#a5d6ff", "cc": "#616e7f"},
-    "light": {"key": "#953800", "value": "#0a3069", "cc": "#8c959f"},
+PALETTE = {                        # sama dengan kartu neofetch; flash = kilau saat makan
+    "dark": {"key": "#ffa657", "value": "#a5d6ff", "cc": "#616e7f", "flash": "#ffd33d"},
+    "light": {"key": "#953800", "value": "#0a3069", "cc": "#8c959f", "flash": "#bf8700"},
 }
 FONT = "ConsolasFallback,Consolas,Menlo,monospace"
 MARK = "pacman-counter"
 HOLD_MS = 3000                     # jeda di akhir putaran untuk menampilkan total
+TICK = 0.05                        # detik per langkah angka bergulir (20 fps)
+EASE = 0.3                         # porsi sisa yang ditambahkan tiap langkah
+FLOAT_S = 0.7                      # lama "+N" melayang lalu hilang
 
 
 def fetch_calendar() -> dict[dt.date, int]:
@@ -90,34 +96,104 @@ def eat_times(svg: str) -> tuple[dict[tuple[int, int], float], str, str]:
     return times, dur, rep
 
 
-def counter_svg(events: list[tuple[float, int]], dur: str, rep: str, theme: str, y: float) -> str:
+def ms(d: str) -> float:
+    return float(d[:-2]) if d.endswith("ms") else float(d.rstrip("s")) * 1000
+
+
+def roll_frames(events: list[tuple[float, int]], length: float) -> list[tuple[float, int]]:
+    """Simulasikan angka yang 'mengejar' total sebenarnya (gaya odometer).
+
+    Tiap TICK detik angka naik ceil(sisa * EASE): kenaikan kecil langsung
+    selesai, kenaikan besar bergulir ~0.5-1 detik lalu melambat tepat di
+    total. Kalau kotak berikutnya dimakan saat masih bergulir, target ikut
+    naik (berantai), jadi tidak pernah meloncat dan selalu berakhir tepat.
+    """
+    frames, shown, i, target, t = [(0.0, 0)], 0, 0, 0, 0.0
+    while t < length:
+        while i < len(events) and events[i][0] <= t + 1e-9:
+            target = events[i][1]
+            i += 1
+        if shown < target:
+            shown += max(1, math.ceil((target - shown) * EASE))
+            frames.append((t, shown))
+        t = round(t + TICK, 6)
+    return frames
+
+
+def pulse_track(starts: list[float], length: float, rise: float, fall: float,
+                peak: str, base: str) -> tuple[str, str]:
+    """keyTimes/values linear: naik ke `peak` lalu kembali ke `base` per event."""
+    pts = [(0.0, base)]
+    for j, t in enumerate(starts):
+        nxt = starts[j + 1] if j + 1 < len(starts) else length
+        if t <= pts[-1][0]:
+            continue
+        pts.append((t, base))
+        a = min(t + rise, nxt - 1e-3)
+        pts.append((a, peak))
+        b = min(a + fall, nxt - 2e-3)
+        if b > a:
+            pts.append((b, base))
+    if pts[-1][0] < length:
+        pts.append((length, pts[-1][1]))
+    kt = ";".join(f"{x / length:.5f}" for x, _ in pts)
+    return kt, ";".join(v for _, v in pts)
+
+
+def counter_svg(events: list[tuple[float, int]], length_ms: float, rep: str,
+                theme: str, y: float) -> str:
+    """events: (detik dimakan, total berjalan) pada linimasa sepanjang length_ms."""
     c = PALETTE[theme]
-    label = "Commit: "
-    vx = len(label) * 8.4                                 # 14px monospace ~0.6em
+    L = length_ms / 1000
+    dur = f"{length_ms:.0f}ms"
+    vx = len("Commit: ") * 8.4                           # 14px monospace ~0.6em
+    total = events[-1][1] if events else 0
+    px = vx + len(f"{total:,}") * 8.4 + 10                # posisi "+N"
+    head = f'dur="{dur}" repeatCount="{rep}"'
     parts = [f'<g id="{MARK}" font-family="{FONT}" font-size="14px">',
              f'<text x="0" y="{y}" fill="{c["key"]}">Commit<tspan fill="{c["cc"]}">:</tspan></text>']
-    steps = [(0.0, 0)] + events
-    for i, (t, v) in enumerate(steps):
-        nxt = steps[i + 1][0] if i + 1 < len(steps) else None
-        if i == 0 and nxt is None:
-            anim = ""
-        elif i == 0:
-            anim = f'values="visible;hidden" keyTimes="0;{nxt:.4f}"'
+
+    # Angka bergulir: satu <text> per nilai, tampil diskret pada jendela waktunya.
+    starts = [t for t, _ in events]
+    kt, vals = pulse_track(starts, L, 0.06, 0.35, c["flash"], c["value"])
+    skt, svals = pulse_track(starts, L, 0.06, 0.30, "1.22", "1")
+    parts.append(f'<g transform="translate({vx:.1f},{y})"><g fill="{c["value"]}">'
+                 f'<animate attributeName="fill" {head} calcMode="linear" keyTimes="{kt}" values="{vals}"/>'
+                 f'<animateTransform attributeName="transform" type="scale" {head} calcMode="linear" '
+                 f'keyTimes="{skt}" values="{svals}"/>')
+    frames = roll_frames(events, L)
+    for j, (t, v) in enumerate(frames):
+        nxt = frames[j + 1][0] if j + 1 < len(frames) else None
+        if j == 0:
+            anim = f'values="visible;hidden" keyTimes="0;{nxt / L:.5f}"' if nxt is not None else ""
         elif nxt is None:
-            anim = f'values="hidden;visible" keyTimes="0;{t:.4f}"'
+            anim = f'values="hidden;visible" keyTimes="0;{t / L:.5f}"'
         else:
-            anim = f'values="hidden;visible;hidden" keyTimes="0;{t:.4f};{nxt:.4f}"'
-        vis = "visible" if i == 0 else "hidden"
-        a = (f'<animate attributeName="visibility" dur="{dur}" repeatCount="{rep}" '
-             f'calcMode="discrete" {anim}/>') if anim else ""
-        parts.append(f'<text x="{vx:.1f}" y="{y}" fill="{c["value"]}" visibility="{vis}">{v:,}{a}</text>')
+            anim = f'values="hidden;visible;hidden" keyTimes="0;{t / L:.5f};{nxt / L:.5f}"'
+        a = f'<animate attributeName="visibility" {head} calcMode="discrete" {anim}/>' if anim else ""
+        parts.append(f'<text visibility="{"visible" if j == 0 else "hidden"}">{v:,}{a}</text>')
+    parts.append("</g></g>")
+
+    # "+N" kecil yang naik dan memudar di samping angka.
+    prev = 0
+    for j, (t, v) in enumerate(events):
+        n, prev = v - prev, v
+        nxt = events[j + 1][0] if j + 1 < len(events) else L
+        # Hanya satu "+N" tampil: yang lama hilang saat kotak berikutnya dimakan.
+        a, b = t / L, max(min(t + FLOAT_S, nxt, L), t + 0.02) / L
+        parts.append(
+            f'<text x="{px:.1f}" y="{y}" font-size="12px" fill="{c["flash"]}" opacity="0">+{n:,}'
+            f'<animate attributeName="opacity" {head} calcMode="linear" '
+            f'keyTimes="0;{a:.5f};{a + 0.00001:.5f};{b:.5f};1" values="0;0;1;0;0"/>'
+            f'<animateTransform attributeName="transform" type="translate" {head} calcMode="linear" '
+            f'keyTimes="0;{a:.5f};{b:.5f};1" values="0,0;0,0;0,-12;0,-12"/></text>')
     parts.append("</g>")
-    return "".join(parts)
+    return "".join(parts), len(frames)
 
 
 def add_hold(svg: str, dur: str) -> str:
     """Perpanjang semua animasi ber-dur `dur` sebanyak HOLD_MS, tahan frame akhir."""
-    d = float(dur.rstrip("ms")) if dur.endswith("ms") else float(dur.rstrip("s")) * 1000
+    d = ms(dur)
     scale = d / (d + HOLD_MS)
 
     def fix(m: re.Match) -> str:
@@ -158,10 +234,13 @@ def process(path: str, theme: str, calendar: dict[dt.date, int]) -> int:
     m = re.search(r'<svg width="(\d+)" height="(\d+)"', svg)
     w, h = int(m.group(1)), int(m.group(2))
     svg = svg.replace(m.group(0), f'<svg width="{w}" height="{h + EXTRA_H}"', 1)
-    svg = svg.replace("</svg>", counter_svg(events, dur, rep, theme, h + 12) + "</svg>")
     svg = add_hold(svg, dur)
+    D = ms(dur)
+    sec = [(t * D / 1000, v) for t, v in events]
+    block, nframes = counter_svg(sec, D + HOLD_MS, rep, theme, h + 12)
+    svg = svg.replace("</svg>", block + "</svg>")
     open(path, "w", encoding="utf-8").write(svg)
-    print(f"{path}: {len(events)} langkah, total {total:,} (kalender {sum(counts.values()):,})")
+    print(f"{path}: {len(events)} event, {nframes} frame angka, total {total:,} (kalender {sum(counts.values()):,})")
     return total
 
 
