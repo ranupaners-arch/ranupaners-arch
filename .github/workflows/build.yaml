@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r cache/requirements.txt
 
+      - name: Bangun ulang kartu dari tools/build_cards.py
+        run: python tools/build_cards.py
+
       - name: Update stats SVG
         env:
           # PAT (secret ACCESS_TOKEN) diperlukan agar repo privat ikut terhitung;
