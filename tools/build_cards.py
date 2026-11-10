@@ -32,7 +32,7 @@ ASCII_FS, ASCII_LH = 12, 14   # potret lebih rapat agar wajah dikenali
 
 USER = "ranupane@kukerjain"
 INFO = [
-    ("OS", "macOS, iOS, Android"),
+    ("OS", "macOS, Linux, iOS, Android"),
     ("Uptime", None),
     ("Host", "kukerjain.dev"),
     ("Kernel", "Pendidikan Bahasa Arab @ Institut Muslim Cendekia"),
@@ -44,12 +44,14 @@ INFO = [
     ("Languages.Real", "Indonesia, Arab, English"),
     None,
     ("Hobbies.Software", "Web & App Development"),
-    ("Hobbies.Real", "Puisi"),
+    ("Hobbies.Real", "Poet, Writing, Reading"),
 ]
 CONTACT = [
-    ("Email", "halo@kukerjain.dev"),
+    ("Email", "ranupaners@gmail.com"),
     ("Website", "ranupane.kukerjain.dev"),
-    ("X", "@kukerjainweb"),
+    ("Instagram", "@_mberimbe"),
+    ("X", "@rnpainvest"),
+    ("Substack", "@rimbaranupane"),
     ("GitHub", "ranupaners-arch"),
 ]
 # Nilai awal sebelum today.py jalan (akan ditimpa).
