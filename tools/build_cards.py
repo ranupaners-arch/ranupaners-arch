@@ -32,11 +32,13 @@ ASCII_FS, ASCII_LH = 12, 14   # potret lebih rapat agar wajah dikenali
 
 USER = "RANUPANE RIMBA ARGANA"
 INFO = [
+    ("AI Engineer"),
     ("OS", "macOS, Linux, iOS, Android"),
     ("Uptime", None),
     ("Host", "kukerjain.dev"),
     ("Kernel", "Arabic Language Education @ Institut Muslim Cendekia"),
     ("Role.Startup", "Founder KukerjainAja (Web & App Development Services)"),
+    ("Role.Director", "Al-Mutqon Arabic Learning",
     ("IDE", "VS Code, Orca, Cursor"),
     None,
     ("Languages.Programming", "Dart, TypeScript, JavaScript, Python"),
